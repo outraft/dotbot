@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from os import getenv
-from cogs import GeneralCommands, AdministratorCommands
+from cogs import GeneralCommands, AdministratorCommands, TicketCommands, AdminTicketCommands
 
 load_dotenv()
 
@@ -13,6 +13,8 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 async def setup_hooks():
 	await bot.add_cog(GeneralCommands(bot))
 	await bot.add_cog(AdministratorCommands(bot))
+	await bot.add_cog(TicketCommands(bot))
+	await bot.add_cog(AdminTicketCommands(bot))
 
 @bot.event
 async def on_ready():
