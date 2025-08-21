@@ -74,7 +74,7 @@ class TicketCommands(commands.Cog):
 			tickets = guild_data.get("tickets", {})
 
 			for ticket in tickets.values():
-				if ticket["user"] == interaction.user.id:
+				if ticket["user"] == interaction.user.id and not ticket["status"] == "closed":
 					channel_id = ticket["ticket_channel"]
 					await interaction.response.send_message(f"You have already opened a ticket | <#{channel_id}>", ephemeral=True)
 					return
