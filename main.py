@@ -8,6 +8,7 @@ load_dotenv()
 
 client = getenv("TOKEN")
 intents = discord.Intents.default()
+intents.members = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 async def setup_hooks():
