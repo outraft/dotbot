@@ -10,6 +10,7 @@ async def embedMaker(
 	color : Optional[discord.Color] = None,
 	isTimestamped : Optional[bool] = None,
 	image : Optional[str] = None,
+	thumbnail : Optional[str] = None,
 	fields : Optional[List[Union[Tuple[str, str, bool], dict]]] = None
 	) -> discord.Embed:
 
@@ -38,16 +39,24 @@ async def embedMaker(
 	if color:
 		embed.color = color
 	if footer:
-		embed.footer = footer
+		if isinstance(footer, tuple):
+			text, icon = footer
+		else:
+			icon = None
+			text = footer
+		embed.set_footer(text=text, icon_url=icon)
+
 	if isTimestamped:
 		embed.timestamp = datetime.datetime.now()
 	if image:
 		embed.set_image(url=image)
+	if thumbnail:
+		embed.set_thumbnail(url=thumbnail)
 	if fields:
 		for field in fields:
 			if isinstance(field, tuple):
 				name, value, inline = field
-				embed.add_field(field)
+				embed.add_field(name=name, value=value, inline=inline)
 			elif isinstance(field, dict):
 				embed.add_field(
 					name=field.get("name", ""),

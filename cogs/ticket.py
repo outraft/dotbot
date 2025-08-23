@@ -16,6 +16,7 @@ class TicketCommands(commands.Cog):
 		self.bot = bot
 		base_path = Path(__file__).parent.parent
 		self.json_path = base_path / "data" / "ticket_data.json"
+		self.ticket_path = base_path / "img" / "ticket.png"
 		try:
 			with open(self.json_path, "r") as f:
 				self.ticket_data = json.load(f)
@@ -52,11 +53,17 @@ class TicketCommands(commands.Cog):
 					continue
 				except:
 					pass
+			file = discord.File(self.ticket_path, filename="ticket.png")
 			embed = await embedMaker(
-				title="To open a ticket react to the message with \"🎫\"",
-				message="This will notify admins and IT Team, use with caution, as false tickets is a rule-breaking offense!")
+				title="To open a ticket, click \"Open Ticket\" down below!",
+				message="This will notify admins and IT Team, use with caution, as false tickets is a rule-breaking offense!",
+				thumbnail="attachment://ticket.png",
+				fields=[{"name":"" ,"value": "Please do not forget that our staff is human, unlike me, so be respectful!", "inline": False}, {"name": "", "value": "Remember, **using caps or swearing** won't help resolve your case.", "inline": False}],
+				footer=("made by ersin, with love <3", self.bot.user.display_avatar.url) )
+
 			view = self.TicketView(self, guild_id)
-			msg = await channel.send(embed=embed, view=view)
+
+			msg = await channel.send(embed=embed, file=file, view=view)
 			self.ticket_data[guild_id] = {"message_id": msg.id, "channel_id": channel.id, "ticket_counter": ticket_counter, "tickets": {}}
 			with open(self.json_path, "w", encoding='utf-8') as f:
 				json.dump(self.ticket_data, f, indent=4)
@@ -76,7 +83,7 @@ class TicketCommands(commands.Cog):
 			for ticket in tickets.values():
 				if ticket["user"] == interaction.user.id and not ticket["status"] == "closed":
 					channel_id = ticket["ticket_channel"]
-					await interaction.response.send_message(f"You have already opened a ticket | <#{channel_id}>", ephemeral=True)
+					await interaction.response.send_message(f"You have already opened a ticket | <#{channel_id}>", ephemeral=True, delete_after=5)
 					return
 
 			ticket_counter = guild_data.get("ticket_counter", 0) + 1
@@ -100,7 +107,7 @@ class TicketCommands(commands.Cog):
 			with open(self.cog.json_path, "w", encoding="utf-8") as f:
 				json.dump(self.cog.ticket_data, f, indent=4)
 
-			await interaction.response.send_message(f"Ticket has been opened at {channel.mention}", ephemeral=True)
+			await interaction.response.send_message(f"Ticket has been opened at {channel.mention}", ephemeral=True, delete_after=30)
 			await channel.send(embed= await embedMaker(title="Staff has been notified of your ticket!", message="Describe your problem in a few, simple sentences. A staff will arrive soon to help you out!", isTimestamped=True))
 			admin_cog = self.cog.bot.get_cog("AdminTicketCommands")
 			if admin_cog:
@@ -127,13 +134,11 @@ class AdminTicketCommands(commands.Cog):
 			channel = guild.get_channel(data["channel_id"])
 			if not channel:
 				continue
-			#escalator = data[]
 			try:
 				msg = await channel.fetch_message(data["message_id"])
 				view1 = self.AdminTicketView(self, guild_id, channel)
 				view2 = self.AdminEscalateView(guild_id, channel)
 				self.bot.add_view(view1, message_id=msg.id)
-				#self.bot.add_view(view2, message_id=)
 			except:
 				continue
 
@@ -151,12 +156,16 @@ class AdminTicketCommands(commands.Cog):
 	async def closeticket(self, interaction : discord.Interaction):
 		if "ticket" in interaction.channel.name.lower():
 			await interaction.response.send_message(f"This ticket is closed by {interaction.user.mention}, the channel will be closed in 5 seconds.")
+
+			alerts = discord.utils.get(interaction.guild.text_channels, name="alerts")
+			channel_name = interaction.channel.name
+			ticket_id = str(int(channel_name.split("-")[-1]))
+
+			await alerts.send(f"The staff member {interaction.user.mention} has solved the ticket {channel_name}, which can be ID'd by {ticket_id}.")
 			await asyncio.sleep(5)
 
 			ticket_cog = self.ticket_cog
 			guild_id = interaction.guild.id
-			channel_name = interaction.channel.name
-			ticket_id = str(int(channel_name.split("-")[-1]))
 			status = "closed"
 
 			ticket_cog.ticket_data[str(guild_id)]["tickets"][ticket_id]["status"] = status
@@ -164,7 +173,8 @@ class AdminTicketCommands(commands.Cog):
 				json.dump(ticket_cog.ticket_data, f, indent=4)
 
 			await interaction.channel.delete()
-
+		else:
+			await interaction.response.send_message("This is not a ticket channel!", ephemeral=True, delete_after=5)
 	@discord.app_commands.command(name="escalate", description="Escalates ticket to admins.")
 	@has_roles_case_insensitive("it")
 	async def escalate(self, interaction : discord.Interaction):
@@ -190,7 +200,8 @@ class AdminTicketCommands(commands.Cog):
 			}
 			with open(ticket_cog.json_path, "w", encoding='utf-8') as f:
 				json.dump(ticket_cog.ticket_data, f, indent=4)
-
+		else:
+			await interaction.response.send_message("This is not a ticket channel!", ephemeral=True, delete_after=5)
 	class AdminTicketView(discord.ui.View):
 		def __init__(self, cog, guild_id, ticket_channel):
 			super().__init__(timeout=0)
@@ -205,9 +216,9 @@ class AdminTicketCommands(commands.Cog):
 			if any("admin" in r for r in roles):
 				await ticket_channel.send(f"Your ticket has been taken by {interaction.user.mention}, which is a admin.")
 			elif any("it" in r for r in roles):
-				await ticket_channel.send(f"Your ticket has been taken by {interaction.user.mention}, which is a IT Staff. This ticket can be escalated by the staff member.")
+				await ticket_channel.send(f"Your ticket has been taken by {interaction.user.mention}, which is a IT Staff.")
 			else:
-				await interaction.response.send_message("You do not have the permission to take tickets!", ephemeral=True)
+				await interaction.response.send_message("You do not have the permission to take tickets!", ephemeral=True, delete_after=5)
 	class AdminEscalateView(discord.ui.View):
 		def __init__(self, cog, guild_id, ticket_channel, escalator):
 			super().__init__(timeout=0)
@@ -215,18 +226,20 @@ class AdminTicketCommands(commands.Cog):
 			self.guild_id = guild_id
 			self.ticket_channel = ticket_channel
 			self.escalator = escalator
-		@discord.ui.button(label=":exclamation: Escalate Ticket", custom_id="escalate_button")
+		@discord.ui.button(label="‼️ Escalate Ticket", custom_id="escalate_button")
 		async def escalate(self, interaction : discord.Interaction, button : discord.ui.Button):
 			ticket_channel = self.ticket_channel
 			escalator = self.escalator
 			roles = [role.name.lower() for role in interaction.user.roles]
 			if any("admin" in r for r in roles):
+				button.disabled = True
+				await interaction.message.delete()
 				await ticket_channel.send(f"The escalation has been taken by {interaction.user.mention}, which is a admin.")
 				await ticket_channel.set_permissions(interaction.user, read_messages=True, send_messages=True)
 			elif any("it" in r for r in roles):
-				await interaction.response.send_message(f"This ticket has already been escalated by {escalator.mention}", ephemeral=True)
+				await interaction.response.send_message(f"This ticket has been escalated by {interaction.user.mention}, which is a IT Staff. The escalation can only be solved by a administrator.", ephemeral=True, delete_after=5)
 			else:
-				await interaction.response.send_message("You do not have the permission to escalate tickets!", ephemeral=True)
+				await interaction.response.send_message("You do not have the permission to escalate tickets!", ephemeral=True, delete_after=5)
 
 
 
