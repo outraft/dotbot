@@ -18,11 +18,140 @@ class GeneralCommands(commands.Cog):
 		self.bot = bot
 		base_path = Path(__file__).parent.parent
 		self.status_json = base_path / "data" / "status.json"
+		self.role_data_json = base_path / "data" / "role_data.json"
 
 	@commands.Cog.listener()
 	async def on_ready(self):
-		print("started status!")
 		self.change_status.start()
+		# React for role
+		for guild in self.bot.guilds:
+			channel = discord.utils.get(guild.text_channels, name="role-chat")
+			if not channel:
+				continue
+			g_id = str(guild.id)
+			try:
+				with open(self.role_data_json, "r", encoding='utf-8') as f:
+					data = json.load(f)
+			except:
+				data = {}
+			m_id = data.get(g_id, {}).get("m_id")
+			if m_id:
+				try:
+					msg = await channel.fetch_message(m_id)
+					return
+				except:
+					pass
+
+			coder_r = discord.utils.get(guild.roles, name="∘ Coder ∘")
+			coder_length = len(coder_r.members) if coder_r else 0
+			artist_r = discord.utils.get(guild.roles, name="∘ Artist ∘")
+			artist_length = len(artist_r.members) if artist_r else 0
+			game_night_r = discord.utils.get(guild.roles, name="∘ Game Night ∘")
+			game_night_length = len(game_night_r.members) if game_night_r else 0
+			embed = await embedMaker(
+			title="Use this message to get your specified roles!",
+			message= "If you haven't got it by answering the questionnare or want to get rid of it.",
+			fields=[
+				{"name": "", "value":"React with 🖌️ to get the \"Artist\" role."},
+				{"name": "", "value": "React with 💻 to get the \"Coder\" role."},
+				{"name": "", "value": "React with 🎮 to get the \"Game Night\" role."},
+				{"name": "", "value": "To remove the role you got, unreact to the role."}]
+			)
+			msg = await channel.send(embed=embed)
+			await msg.add_reaction("🖌️")
+			await msg.add_reaction("💻")
+			await msg.add_reaction("🎮")
+
+			data[g_id] = {
+				"m_id": msg.id,
+				"count": {
+					"∘ Artist ∘": artist_length,
+					"∘ Coder ∘": coder_length,
+					"∘ Game Night ∘": game_night_length
+					}
+				}
+
+			with open(self.role_data_json, "w", encoding='utf-8') as f:
+				json.dump(data, f, indent=4)
+
+	@commands.Cog.listener()
+	async def on_raw_reaction_add(self, payload):
+		guild = self.bot.get_guild(payload.guild_id)
+		member = guild.get_member(payload.user_id)
+		if payload.member.bot:
+			return
+		with open(self.role_data_json, "r", encoding='utf-8') as f:
+			data = json.load(f)
+
+		g_id = str(payload.guild_id)
+		m_id = data.get(g_id, {}).get("m_id")
+
+		if not m_id or m_id != payload.message_id:
+			return
+
+		role_map = {
+			"🖌️": "∘ Artist ∘",
+			"💻": "∘ Coder ∘",
+			"🎮": "∘ Game Night ∘"
+		}
+
+		role_name = role_map.get(str(payload.emoji))
+		role = discord.utils.get(guild.roles, name=role_name)
+
+		if role in member.roles:
+			old_count = data[g_id]["count"][role_name]
+			data[g_id]["count"][role_name] = old_count + 1
+			return
+
+		if role_name:
+			role = discord.utils.get(guild.roles, name=role_name)
+			if member and role:
+				await member.add_roles(role)
+				old_count = data[g_id]["count"][role_name]
+				data[g_id]["count"][role_name] = old_count + 1
+
+		with open(self.role_data_json, "w", encoding='utf-8') as f:
+			json.dump(data, f, indent=4)
+
+	@commands.Cog.listener()
+	async def on_raw_reaction_remove(self, payload):
+		guild = self.bot.get_guild(payload.guild_id)
+		member = guild.get_member(payload.user_id)
+
+		if member.bot:
+			return
+
+		with open(self.role_data_json, "r", encoding='utf-8') as f:
+			data = json.load(f)
+
+		g_id = str(payload.guild_id)
+		m_id = data.get(g_id, {}).get("m_id")
+
+		if not m_id or m_id != payload.message_id:
+			return
+
+		role_map = {
+			"🖌️": "∘ Artist ∘",
+			"💻": "∘ Coder ∘",
+			"🎮": "∘ Game Night ∘"
+		}
+
+		role_name = role_map.get(str(payload.emoji))
+		role = discord.utils.get(guild.roles, name=role_name)
+
+		if role_name:
+			member = guild.get_member(payload.user_id)
+			role = discord.utils.get(guild.roles, name=role_name)
+			if member and role:
+				try:
+					await member.remove_roles(role)
+				except Exception as e:
+					print(f"{e}")
+				old_count = data[g_id]["count"][role_name]
+				data[g_id]["count"][role_name] = old_count - 1
+
+		with open(self.role_data_json, "w", encoding='utf-8') as f:
+			json.dump(data, f, indent=4)
 
 	@tasks.loop(minutes=20)
 	async def change_status(self):
