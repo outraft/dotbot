@@ -2,6 +2,7 @@
 <p align="center">
   <a href="buymeacoffee.com/outraft">☕ Buy Me a Coffee</a>
 </p>
+
 ## Who are we?
 We GDC Dottopus, located at Istinye University are a club that focuses on making game jams, game nights and more events possible, to make game-dev popular at Turkiye.
 
@@ -11,7 +12,7 @@ I would like to remind that the code is still owned by me and the GDC Dottopus s
 
 ## Can I use this bot in my discord server?
 You can, but do not forget that this bot is **hard-coded** to suit GDC Dottopus server, so there might be bugs ocurring left and right. I am thinking about making a web-application for usage of this bot but time will show us if we need this or not.\
-Use (this link)[https://discord.com/oauth2/authorize?client_id=1404577419171729508] to generate a invite to DotBot.
+Use [this link](https://discord.com/oauth2/authorize?client_id=1404577419171729508) to generate a invite to DotBot.
 
 ## How can I install this bot?
 
