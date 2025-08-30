@@ -1,4 +1,7 @@
-# DotBot | Discord Bot
+<h1 align="center">DotBot | Discord Bot</h1>
+<p align="center">
+  <a href="buymeacoffee.com/outraft">☕ Buy Me a Coffee</a>
+</p>
 ## Who are we?
 We GDC Dottopus, located at Istinye University are a club that focuses on making game jams, game nights and more events possible, to make game-dev popular at Turkiye.
 
