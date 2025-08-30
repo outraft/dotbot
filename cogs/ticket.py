@@ -59,7 +59,8 @@ class TicketCommands(commands.Cog):
 				message="This will notify admins and IT Team, use with caution, as false tickets is a rule-breaking offense!",
 				thumbnail="attachment://ticket.png",
 				fields=[{"name":"" ,"value": "Please do not forget that our staff is human, unlike me, so be respectful!", "inline": False}, {"name": "", "value": "Remember, **using caps or swearing** won't help resolve your case.", "inline": False}],
-				footer=("made by ersin, with love <3", self.bot.user.display_avatar.url) )
+				footer=("made by ersin, with love <3", self.bot.user.display_avatar.url)
+				)
 
 			view = self.TicketView(self, guild_id)
 
