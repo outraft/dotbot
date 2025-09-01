@@ -1,6 +1,6 @@
 <h1 align="center">DotBot | Discord Bot</h1>
 <p align="center">
-  <a href="buymeacoffee.com/outraft">☕ Buy Me a Coffee</a>
+  <a href="https://buymeacoffee.com/outraft">☕ Buy Me a Coffee</a>
 </p>
 
 ## Who are we?
